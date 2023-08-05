@@ -129,7 +129,7 @@ class Gamma(Distribution):
     loi Gamma.
     """
 
-    name = "Gamma"
+    name = 'Gamma'
     n_params = 2
 
     def __init__(self, alpha: Any, beta: Any, eps: float = 1e-8) -> None:
@@ -177,7 +177,6 @@ class ETAS(Distribution):
         self.eps = eps
         A = bar_n * (p - 1) * (beta - alpha) / (beta * c ** (1 - p))
 
-
         def d(x: float) -> float:
             t = arrival_times
             m = magnitudes
@@ -186,7 +185,6 @@ class ETAS(Distribution):
                 np.exp(alpha * m) * (
                 (x + t[-1] + c - t) ** (1 - p) - (t[-1] + c -t) ** (1 - p))))
             return lhs * rhs
-
 
         self.density = np.vectorize(d)
 
@@ -207,10 +205,8 @@ class Exponential(Distribution):
         self.beta = beta
         self.mean = 1 / beta
 
-
         def d(x: float) -> float:
             return beta * np.exp(-beta * x)
-        
 
         self.density = np.vectorize(d)
 

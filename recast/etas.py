@@ -7,7 +7,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from distributions import ETAS
+from .distributions import ETAS
 
 
 def logrand():
@@ -116,7 +116,7 @@ def create_training_dataset(seqs: list[np.ndarray],
     inter_times = np.array(inter_times)
     magnitudes = np.array(magnitudes)
     seq_lengths = np.array(seq_lengths)
-    return inter_times, magnitudes, seq_lengths
+    return inter_times, magnitudes, seq_lengths, t_end
 
 
 def generate_dataset(batch_size: int = 10,
@@ -128,7 +128,7 @@ def generate_dataset(batch_size: int = 10,
     if 'max_len' in kwargs:
         t_end = []
         # Le dernier événement fixera la fin de l'intervalle.
-        kwargs["max_len"] += 1
+        kwargs['max_len'] += 1
     else:
         t_end = kwargs.get('t_end', 1e3)
 
@@ -143,10 +143,10 @@ def generate_dataset(batch_size: int = 10,
         seqs.append(seq)
 
         if verbose:
-            print(f'Generating sequences: {i + 1:4}/{batch_size}\r', end='')
+            print(f'Generating sequences: {i + 1}/{batch_size}\r', end='')
     print()
             
-    return seqs, create_training_dataset(seqs, t_end), t_end
+    return seqs, create_training_dataset(seqs, t_end)
 
 
 def to_frame(seq: np.ndarray) -> pd.DataFrame:

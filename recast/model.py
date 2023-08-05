@@ -10,13 +10,14 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from distributions import *
+from .distributions import *
 
 
 class Model:
+
     def __init__(self, C: int = 32, dist: Distribution = Weibull,
                  R: int = 1, learning_rate: float = 5e-3,
-                 dropout_rate: float = 0., beta: float = np.log(10),
+                 dropout_rate: float = 0, beta: float = np.log(10),
                  strategy: str = 'tau_log_tau') -> None:
         """Initialise les paramètres du modèle."""
         if strategy not in ['tau_log_tau', 'log_tau']:
@@ -71,7 +72,6 @@ class Model:
         magnitudes = tf.cast(magnitudes, 'float32')
         return tf.expand_dims(magnitudes - self.mag_mean, -1)
 
-    @tf.function
     def get_context(self, inter_times: np.ndarray,
                     magnitudes: Optional[np.ndarray] = None) -> tf.Tensor:
         """Cette fonction n'est utilisée que lors de l'entraînement pour
@@ -103,9 +103,9 @@ class Model:
 
         return Mixture(weights, self.dist(*params, eps=self.eps))
 
-    @tf.function
     def nll_loss(self, inter_times: np.ndarray, seq_lengths: np.ndarray,
-                 magnitudes: Optional[np.ndarray] = None) -> tf.Tensor:
+                 magnitudes: Optional[np.ndarray] = None
+    ) -> tuple[tf.Tensor, Mixture]:
         """Retourne la log-vraisemblance (négative) sur les données selon
         les distributions sorties par le modèle.
         """
@@ -126,9 +126,9 @@ class Model:
         last_idx = tf.stack([tf.range(len(seq_lengths)), seq_lengths], -1)
         log_surv = tf.gather_nd(log_surv, last_idx)
 
-        # On calcule la log-vraisemblance et on la renvoie.
+        # On calcule la log-vraisemblance finale.
         log_like = tf.reduce_sum(log_prob, -1) + log_surv
-        return -log_like
+        return -log_like, distributions
 
     def fit(self, inter_times: np.ndarray, seq_lengths: list[int],
             t_end: float | list[float], epochs: int,
@@ -146,9 +146,8 @@ class Model:
 
         for epoch in tf.range(1, epochs + 1):
             with tf.GradientTape() as tape:
-                context = self.get_context(inter_times, magnitudes)
-                distributions = self.get_distributions(context)
-                nll_loss = self.nll_loss(inter_times, seq_lengths, magnitudes)
+                nll_loss, distributions = self.nll_loss(
+                    inter_times, seq_lengths, magnitudes)
                 loss = tf.reduce_mean(nll_loss / t_end)
 
                 history.setdefault('loss', []).append(loss.numpy())
@@ -252,29 +251,29 @@ class Model:
     def build_params(self) -> dict:
         """Retourne les paramètres du modèle."""
         return {
-            "C": self.C,
-            "dist": self.dist,
-            "R": self.R,
-            "learning_rate": self.learning_rate,
-            "dropout_rate": self.dropout_rate,
-            "beta": self.beta,
-            "strategy": self.strategy
+            'C': self.C,
+            'dist': self.dist,
+            'R': self.R,
+            'learning_rate': self.learning_rate,
+            'dropout_rate': self.dropout_rate,
+            'beta': self.beta,
+            'strategy': self.strategy
         }
     
     def save(self, filename: str) -> None:
         """Sauvegarde les paramètres et les poids du modèle dans un fichier."""
         build_params = self.build_params
         rnn_input_dim = self.rnn.weights[0].shape[0]
-        with open(filename, "wb") as f:
+        with open(filename, 'wb') as f:
             pickle.dump([build_params,
                          self.weights,
                          self.magnitudes,
                          rnn_input_dim], f)
 
     @staticmethod
-    def load(filename: str) -> "Model":
+    def load(filename: str) -> 'Model':
         """Reconstruit un modèle à partir d'un fichier de sauvegarde."""
-        with open(filename, "rb") as f:
+        with open(filename, 'rb') as f:
             build_params, weights, magnitudes, input_dim = pickle.load(f)
 
         model = Model(*build_params.values())

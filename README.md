@@ -14,5 +14,7 @@ python -m pip install \
     tensorflow-probability \
     matplotlib \
     seaborn \
+    jax \
     jaxlib
 ```
+

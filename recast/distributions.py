@@ -26,23 +26,23 @@ class Distribution:
 
     def log_survival_function(self, x: Any) -> tf.Tensor:
         raise NotImplementedError
-    
+
     @property
     def tfd(self) -> tfd.Distribution:
         """Renvoie la distribution TensorFlow équivalente pour le tirage."""
         raise NotImplementedError
-    
+
     @property
     def params(self) -> tf.Tensor:
         """Renvoie les paramètres de la loi."""
         raise NotImplementedError
- 
+
     def sample(self, shape: tuple[int] = ()) -> np.ndarray:
         """Effectue un tirage à partir de la distribution TensorFlow
         sous-jacente.
         """
         return self.tfd.sample(shape).numpy()
-    
+
 
 class Mixture(Distribution):
     """Cette classe représente une loi de mélange basée sur une unique loi."""
@@ -74,14 +74,14 @@ class Mixture(Distribution):
     def log_survival_function(self, x: Any) -> tf.Tensor:
         y = self.survival(x)
         return tf.math.log(tf.math.maximum(y, self.eps))
-    
+
     @property
     def tfd(self) -> tfd.Distribution:
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=self.weights),
             components_distribution=self.dist.tfd
         )
-    
+
     @property
     def params(self) -> tuple[tf.Tensor, tf.Tensor]:
         return self.weights, self.dist.params
@@ -113,16 +113,16 @@ class Weibull(Distribution):
 
     def log_survival_function(self, x: Any) -> tf.Tensor:
         x = tf.maximum(tf.cast(x, 'float32'), self.eps)
-        return -self.b * tf.math.pow(x, self.k) 
+        return -self.b * tf.math.pow(x, self.k)
 
     @property
     def tfd(self) -> tfd.Distribution:
         return tfd.Weibull(self.k, tf.math.pow(self.b, -1 / self.k))
-    
+
     @property
     def params(self) -> tf.Tensor:
         return tf.stack([self.b, self.k], -1)
-    
+
 
 class Gamma(Distribution):
     """Cette classe fournit les fonctions usuelles pour la
@@ -159,7 +159,7 @@ class Gamma(Distribution):
     @property
     def tfd(self) -> tfd.Distribution:
         return tfd.Gamma(self.alpha, self.beta)
-    
+
     @property
     def params(self) -> tf.Tensor:
         return tf.stack([self.alpha, self.beta], -1)
@@ -181,9 +181,10 @@ class ETAS(Distribution):
             t = arrival_times
             m = magnitudes
             lhs = A * np.sum(np.exp(alpha * m) * (x + t[-1] + c - t) ** (-p))
-            rhs = np.exp(-A / (1 - p) * np.sum(
-                np.exp(alpha * m) * (
-                (x + t[-1] + c - t) ** (1 - p) - (t[-1] + c -t) ** (1 - p))))
+            rhs_1 = (x + t[-1] + c - t) ** (1 - p)
+            rhs_2 = (t[-1] + c - t) ** (1 - p)
+            rhs = np.exp(-A / (1 - p) *
+                         np.sum(np.exp(alpha * m) * (rhs_1 - rhs_2)))
             return lhs * rhs
 
         self.density = np.vectorize(d)
@@ -212,6 +213,6 @@ class Exponential(Distribution):
 
     def prob(self, x: Any) -> np.ndarray:
         return self.density(x)
-    
+
     def sample(self, size: Optional[tuple[int]] = None):
         return -1 / self.beta * np.log(np.random.uniform(size=size))

@@ -23,7 +23,7 @@ class Model:
         if strategy not in ['tau_log_tau', 'log_tau']:
             raise ValueError(
                 f'Unknown strategy for time encoding: \'{strategy}\'')
-        
+
         self.C = C          # Nombre d'unités dans la couche GRU.
         self.R = R          # Nombre de composantes dans la loi de mélange.
         self.dist = dist
@@ -43,7 +43,7 @@ class Model:
         self.tau_mean = 1.
         self.mag_dist = Exponential(beta=beta)
         self.mag_mean = self.mag_dist.mean
-          
+
     @property
     def layers(self) -> list[keras.layers.Layer]:
         return [self.rnn, self.dense]
@@ -66,7 +66,7 @@ class Model:
         elif self.strategy == 'tau_log_tau':
             return tf.concat([inter_times - self.tau_mean,
                              log_tau - tf.math.log(self.tau_mean)], -1)
-    
+
     def encode_magnitudes(self, magnitudes: np.ndarray) -> tf.Tensor:
         """Encode les magnitudes."""
         magnitudes = tf.cast(magnitudes, 'float32')
@@ -105,7 +105,7 @@ class Model:
 
     def nll_loss(self, inter_times: np.ndarray, seq_lengths: np.ndarray,
                  magnitudes: Optional[np.ndarray] = None
-    ) -> tuple[tf.Tensor, Mixture]:
+                 ) -> tuple[tf.Tensor, Mixture]:
         """Retourne la log-vraisemblance (négative) sur les données selon
         les distributions sorties par le modèle.
         """
@@ -161,15 +161,15 @@ class Model:
                 zip(gradients, self.trainable_weights))
 
             if verbose == 2 \
-                or (verbose == 1 and (epoch == 1 or epoch % 10 == 0)):
+                    or (verbose == 1 and (epoch == 1 or epoch % 10 == 0)):
                 print(f'Loss at epoch {epoch:>4}: {loss:>8.3f}')
-        
+
         return history
-    
+
     def generate(self,
                  batch_size: int,
                  t_end: float
-    ) -> tuple[np.ndarray, np.ndarray]:
+                 ) -> tuple[np.ndarray, np.ndarray]:
         """Génère des séquences entières de données."""
         # Par défaut, le vecteur contexte (state) est nul
         # et les listes sont vides.
@@ -192,7 +192,7 @@ class Model:
                 magnitudes = tf.concat([magnitudes, next_magnitudes], -1)
                 rnn_input = tf.concat(
                     [rnn_input, self.encode_magnitudes(next_magnitudes)], -1)
-            
+
             # On met à jour le vecteur contexte et on vérifie si la
             # condition d'arrêt est atteinte.
             state = self.rnn(rnn_input, initial_state=state)[1]
@@ -205,11 +205,11 @@ class Model:
         if self.magnitudes:
             generated_data = np.stack([generated_data, magnitudes], -1)
         return generated_data, seq_lengths
-            
+
     def predict(self, arrival_times: np.ndarray,
                 magnitudes: Optional[np.ndarray] = None, n: int = 1,
                 return_distributions: bool = False
-    ) -> tuple[np.ndarray, list[Distribution]] | np.ndarray:
+                ) -> tuple[np.ndarray, list[Distribution]] | np.ndarray:
         """Détermine les prochains temps d'attente pour une séquence donnée."""
         inter_times = np.diff(arrival_times, prepend=0)
         rnn_input = self.encode_times(inter_times)
@@ -227,15 +227,15 @@ class Model:
             distributions.append(next_distribution)
             next_inter_time = next_distribution.sample()
             inter_times.append(next_inter_time[0])
-    
+
             rnn_input = self.encode_times(next_inter_time)
             if self.magnitudes:
-                next_magnitude = self.mag_dist.sample(size=1) 
+                next_magnitude = self.mag_dist.sample(size=1)
                 magnitudes.append(next_magnitude[0])
                 rnn_input = tf.concat([
-                        rnn_input[:, tf.newaxis],
-                        self.encode_magnitudes(next_magnitude)[..., tf.newaxis]
-                    ], -1)
+                    rnn_input[:, tf.newaxis],
+                    self.encode_magnitudes(next_magnitude)[..., tf.newaxis]
+                ], -1)
 
             state = self.rnn(rnn_input, initial_state=state)[1]
 
@@ -259,7 +259,7 @@ class Model:
             'beta': self.beta,
             'strategy': self.strategy
         }
-    
+
     def save(self, filename: str) -> None:
         """Sauvegarde les paramètres et les poids du modèle dans un fichier."""
         build_params = self.build_params

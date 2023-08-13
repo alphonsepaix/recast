@@ -14,7 +14,7 @@ def logrand():
     return np.log(np.random.uniform())
 
 
-def etas(mu: float = 1, alpha: float = 2, bar_n: float = 0.9, p: float = 1.1, 
+def etas(mu: float = 1, alpha: float = 2, bar_n: float = 0.9, p: float = 1.1,
          c: float = 1e-9, beta: float = np.log(10), t_end: float = 1e3,
          max_len: Optional[int] = None) -> np.ndarray | None:
     """Génère et renvoie une séquence ETAS dans un tableau NumPy
@@ -23,7 +23,7 @@ def etas(mu: float = 1, alpha: float = 2, bar_n: float = 0.9, p: float = 1.1,
     """
     if max_len is not None and max_len < 0:
         raise ValueError('max_len must be positive')
-    
+
     A = bar_n / (beta * c ** (1 - p) / ((p - 1) * (beta - alpha)))
     tc = 0
     t = np.array([])
@@ -41,10 +41,10 @@ def etas(mu: float = 1, alpha: float = 2, bar_n: float = 0.9, p: float = 1.1,
 
     if len(t) == 0:
         return None
-    
+
     if A <= 0:
         return np.stack([t, m, parent], -1)[:max_len]
-    
+
     n = 0
     n_aftershocks = 0
 
@@ -71,7 +71,7 @@ def etas(mu: float = 1, alpha: float = 2, bar_n: float = 0.9, p: float = 1.1,
                     break
             else:
                 break
-                
+
         # Trie la séquence par temps d'arrivée.
         idx = np.argsort(t)
         t = t[idx]
@@ -84,13 +84,13 @@ def etas(mu: float = 1, alpha: float = 2, bar_n: float = 0.9, p: float = 1.1,
 
         if n == len(t):
             break
-    
+
     return np.stack([t, m, parent], -1)[:max_len]
 
 
 def create_training_dataset(seqs: list[np.ndarray],
                             t_end: float | list[float]
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+                            ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Génère des listes adaptées pour l'entraînement à partir
     d'une liste de séquences.
     """
@@ -122,7 +122,7 @@ def create_training_dataset(seqs: list[np.ndarray],
 def generate_dataset(batch_size: int = 10,
                      verbose: bool = False,
                      **kwargs
-) -> tuple[list[np.ndarray], tuple, float | list[float]]:
+                     ) -> tuple[list[np.ndarray], tuple, float | list[float]]:
     """Génère un jeu de données pour l'entraînement."""
     seqs = []
     if 'max_len' in kwargs:
@@ -145,7 +145,7 @@ def generate_dataset(batch_size: int = 10,
         if verbose:
             print(f'Generating sequences: {i + 1}/{batch_size}\r', end='')
     print()
-            
+
     return seqs, create_training_dataset(seqs, t_end)
 
 
@@ -162,7 +162,7 @@ def log_likelihood(seq: np.ndarray, t_end: float, **kwargs) -> float:
     t = seq[:, 0]
     m = seq[:, 1]
     mu = kwargs.get('mu', 1)
-    
+
     # La distribution du premier temps d'attente suit une loi exponentielle.
     tau_distributions = [lambda x: mu * np.exp(-mu * x)]
 

@@ -2,7 +2,9 @@
 
 
 from collections.abc import Iterable
+import os
 from typing import Optional
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -14,9 +16,25 @@ def logrand():
     return np.log(np.random.uniform())
 
 
-def etas(mu: float = 1, alpha: float = 2, bar_n: float = 0.9, p: float = 1.1,
-         c: float = 1e-9, beta: float = np.log(10), t_end: float = 1e3,
-         max_len: Optional[int] = None) -> np.ndarray | None:
+def etas_rust(**kwargs) -> np.ndarray | None:
+    cmd = 'etas'
+    for arg, value in kwargs.items():
+        arg = arg.replace('_', '-')
+        cmd += f' --{arg} {value}'
+    subprocess.run(cmd)
+    filename = 'data.csv'
+    try:
+        data = pd.read_csv(filename, index_col=0)
+        os.remove(filename)
+        return data.to_numpy()
+    except FileNotFoundError:
+        return None
+
+
+def etas_py(mu: float = 1, alpha: float = 2, bar_n: float = 0.9,
+            p: float = 1.1, c: float = 1e-9, beta: float = np.log(10),
+            t_end: float = 1e3, max_len: Optional[int] = None
+            ) -> np.ndarray | None:
     """Génère et renvoie une séquence ETAS dans un tableau NumPy
     (le premier axe contient les temps d'arrivée, le deuxième les
     magnitudes et le troisième les parents correspondants).
@@ -86,6 +104,21 @@ def etas(mu: float = 1, alpha: float = 2, bar_n: float = 0.9, p: float = 1.1,
             break
 
     return np.stack([t, m, parent], -1)[:max_len]
+
+
+def etas(**kwargs) -> np.ndarray | None:
+    engine = kwargs.pop('engine', 'python')
+    kwargs.pop('filename')
+    kwargs.pop('verbose')
+    if engine == 'python':
+        data = etas_py(**kwargs)
+    elif engine == 'rust':
+        data = etas_rust(**kwargs)
+    else:
+        raise ValueError('unknown engine')
+    if data is None:
+        print('An empty sequence was returned.')
+    return data
 
 
 def create_training_dataset(seqs: list[np.ndarray],

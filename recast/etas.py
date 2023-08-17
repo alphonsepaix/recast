@@ -64,7 +64,6 @@ def etas_py(mu: float = 1, alpha: float = 2, bar_n: float = 0.9,
         return np.stack([t, m, parent], -1)[:max_len]
 
     n = 0
-    n_aftershocks = 0
 
     # Génère les répliques.
     while True:
@@ -79,12 +78,6 @@ def etas_py(mu: float = 1, alpha: float = 2, bar_n: float = 0.9,
                     t = np.append(t, tc + t[n])
                     m = np.append(m, -1 / beta * logrand())
                     parent = np.append(parent, n)
-                    n_aftershocks += 1
-
-                    # On génère au moins max_len - 1 répliques si l'argument
-                    # a été fourni avant de quitter.
-                    if max_len and n_aftershocks == max_len - 1:
-                        break
                 else:
                     break
             else:
@@ -97,8 +90,9 @@ def etas_py(mu: float = 1, alpha: float = 2, bar_n: float = 0.9,
         parent = parent[idx]
         n += 1
 
-        if max_len and n_aftershocks == max_len - 1:
-            break
+        if max_len is not None:
+            if max_len == n - 1:
+                break
 
         if n == len(t):
             break
@@ -106,10 +100,9 @@ def etas_py(mu: float = 1, alpha: float = 2, bar_n: float = 0.9,
     return np.stack([t, m, parent], -1)[:max_len]
 
 
-def etas(**kwargs) -> np.ndarray | None:
-    engine = kwargs.pop('engine', 'python')
-    kwargs.pop('filename')
-    kwargs.pop('verbose')
+def etas(engine='python', **kwargs) -> np.ndarray | None:
+    kwargs.pop('filename', None)
+    kwargs.pop('verbose', None)
     if engine == 'python':
         data = etas_py(**kwargs)
     elif engine == 'rust':

@@ -172,8 +172,8 @@ class ETAS(Distribution):
     """
 
     def __init__(self, arrival_times: np.ndarray, magnitudes: np.ndarray,
-                 alpha: float = 2, bar_n: float = 0.9, p: float = 1.1,
-                 c: float = 1e-9, beta: float = np.log(10),
+                 mu: float = 1, alpha: float = 2, bar_n: float = 0.9,
+                 p: float = 1.1, c: float = 1e-9, beta: float = np.log(10),
                  eps: float = 1e-10) -> None:
         self.eps = eps
         A = bar_n * (p - 1) * (beta - alpha) / (beta * c ** (1 - p))
@@ -181,10 +181,11 @@ class ETAS(Distribution):
         def d(x: float) -> float:
             t = arrival_times
             m = magnitudes
-            lhs = A * np.sum(np.exp(alpha * m) * (x + t[-1] + c - t) ** (-p))
+            lhs = mu + A * np.sum(np.exp(alpha * m) *
+                                  (x + t[-1] + c - t) ** (-p))
             rhs_1 = (x + t[-1] + c - t) ** (1 - p)
             rhs_2 = (t[-1] + c - t) ** (1 - p)
-            rhs = np.exp(-A / (1 - p) *
+            rhs = np.exp(-mu * x - A / (1 - p) *
                          np.sum(np.exp(alpha * m) * (rhs_1 - rhs_2)))
             return lhs * rhs
 

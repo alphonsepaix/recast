@@ -22,7 +22,7 @@ class Model:
         """Initialise les paramètres du modèle."""
         if strategy not in ['tau_log_tau', 'log_tau']:
             raise ValueError(
-                f'Unknown strategy for time encoding: \'{strategy}\'')
+                f'unknown strategy for time encoding: \'{strategy}\'')
 
         self.C = C          # Nombre d'unités dans la couche GRU.
         self.R = R          # Nombre de composantes dans la loi de mélange.

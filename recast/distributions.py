@@ -117,6 +117,7 @@ class Weibull(Distribution):
 
     @property
     def tfd(self) -> tfd.Distribution:
+        # L'implémentation TensorFlow n'utilise pas la même paramétrisation.
         return tfd.Weibull(self.k, tf.math.pow(self.b, -1 / self.k))
 
     @property

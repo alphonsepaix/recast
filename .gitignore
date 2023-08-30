@@ -1,3 +1,4 @@
 .vscode/
 recast/__pycache__/
 notebooks/etas.ipynb
+notebooks/__pycache__/

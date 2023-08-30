@@ -1,4 +1,4 @@
-# Fichier utilisé pour mettre rapidemment en place les notebooks
+"""Ce fichier est utilisé pour configurer les calepins Jupyter."""
 
 
 import os

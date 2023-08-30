@@ -4,6 +4,7 @@
 from collections.abc import Iterable
 import os
 from typing import Optional
+import shutil
 import subprocess
 
 import numpy as np
@@ -18,10 +19,12 @@ def logrand():
 
 def etas_rust(**kwargs) -> np.ndarray | None:
     cmd = 'etas'
+    if shutil.which(cmd) == None:
+        raise FileNotFoundError('could not find the Rust binary')
     for arg, value in kwargs.items():
         arg = arg.replace('_', '-')
         cmd += f' --{arg} {value}'
-    subprocess.run(cmd)
+    subprocess.run(cmd, shell=True)
     filename = 'data.csv'
     try:
         data = pd.read_csv(filename, index_col=0)
@@ -106,11 +109,16 @@ def etas(engine='python', **kwargs) -> np.ndarray | None:
     if engine == 'python':
         data = etas_py(**kwargs)
     elif engine == 'rust':
-        data = etas_rust(**kwargs)
+        try:
+            data = etas_rust(**kwargs)
+        except FileNotFoundError:
+            print('Falling back to the Python engine because the Rust binary \
+was not found.')
+            data = etas_py(**kwargs)
     else:
         raise ValueError('unknown engine')
     if data is None:
-        print('An empty sequence was returned.')
+        print('The generated sequence was empty.')
     return data
 
 

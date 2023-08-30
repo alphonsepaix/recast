@@ -178,7 +178,9 @@ def generate_dataset(batch_size: int = 10,
 
         if verbose:
             print(f'Generating sequences: {i + 1}/{batch_size}\r', end='')
-    print()
+    
+    if verbose:
+        print()
 
     return seqs, create_training_dataset(seqs, t_end)
 

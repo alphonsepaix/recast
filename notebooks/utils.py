@@ -240,6 +240,49 @@ def plot_sgd(F, x_train, y_train, thetas):
                ncol=2)
 
 
+def plot_sgd_en(F, x_train, y_train, thetas):
+    fig, axes = plt.subplots(1, 3, figsize=(10, 3))
+    fig.tight_layout()
+
+    thetas = np.array(thetas)
+
+    ax = axes[0]
+
+    ax.plot(thetas[:, 0], thetas[:, 1], zorder=1)
+    ax.scatter(thetas[0, 0], thetas[0, 1], c='blue', s=40,
+               label='Start', zorder=2, marker='v')
+    ax.scatter(thetas[-1][0], thetas[-1][1], c='red', s=40,
+               label='End', zorder=2, marker='^')
+    ax.scatter([3.3], [-3.1], label='Objective', c='green', s=40, marker='>')
+    ax.legend()
+    ax.set_xlabel(r'$\theta_0$')
+    ax.set_ylabel(r'$\theta_1$')
+
+    xs = np.linspace(-10, 10, 500)
+
+    ax = axes[1]
+    ax.scatter(x_train, y_train, s=5, c='C0', alpha=0.5)
+    ax.plot(xs, F(xs, thetas[0]), c='C1', linewidth=3,
+            linestyle='--', label='Model')
+    ax.set_title(r'Initial model (with $\theta^0$)')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    ax = axes[2]
+    ax.scatter(x_train, y_train, s=5, c='C0', alpha=0.5)
+    ax.plot(xs, F(xs, thetas[-1]), c='C1', linewidth=3,
+            linestyle='--')
+    ax.set_title(r'Final model (with $\theta^T$)')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    left_patch = mlines.Line2D([], [], color='C0', label='Targets',
+                               linestyle='', marker='o')
+    right_patch = mpatches.Patch(color='C1', label='Model')
+    fig.legend(handles=[left_patch, right_patch], bbox_to_anchor=[0.78, 0],
+               ncol=2)
+
+
 def F(x, theta):
     a = theta[0]
     b = theta[1]
